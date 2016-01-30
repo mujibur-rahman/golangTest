@@ -78,7 +78,9 @@ func main() {
 		if err != nil {
 			log.Printf("error opening to log file: %v", err)
 		}
-		log.SetOutput(logWriteTo)
+		if logWriteTo != nil {
+			log.SetOutput(logWriteTo)
+		}
 	}
 	gin.SetMode(*ginMode)
 	var route *gin.Engine
