@@ -1,28 +1,34 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"golangTest/auth"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"runtime/debug"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	port         *int
-	ginMode      *string
-	logToFile    *bool
-	useGinLogger *bool
-	logFile      = "logs/web-server.log"
-	timeFormat   = "2006-01-02T15:04:05GMT"
+	port           *int
+	ginMode        *string
+	logToFile      *bool
+	useGinLogger   *bool
+	logFile        = "logs/web-server.log"
+	timeFormat     = "2006-01-02T15:04:05GMT"
+	secretpassword = "holabolaNotLikeaBull"
 )
 
 func init() {
 	port = flag.Int("port", 8000, "Http running on the port")
-	ginMode = flag.String("ginMode", "release", "Gin webframework running on release mode")
+	ginMode = flag.String("ginMode", "release", "Gin webframework running on release mode by default")
 	logToFile = flag.Bool("logToFile", true, "Log write to file")
 	useGinLogger = flag.Bool("useGinLogger", false, "Use gin logger instead of the one used in production")
 }
