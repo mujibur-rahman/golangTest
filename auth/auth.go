@@ -21,6 +21,9 @@ func GetToken(sp string) string {
 	}
 	return ts
 }
+
+// Auth middleware returns handler that serves if the request comes in with valid JSON Web Token
+//It will collect the authkey from the request and add that with GIN Context keys for future request
 func Auth(secret string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.Keys = make(map[string]interface{})
