@@ -29,6 +29,12 @@ To run the application run the follow commands
 * cd golangTest
 * go run main.go
 
+To use flag while running the `main.go`
+
+	* go run main.go [It will start default port: 8000, ginMode: release, logToFile:true and useGinLogger: false
+	* go run main.go -port=9000 -logToFile=false [It will start port 9000 and logToFile=false(It supports to write log on stdout)]
+
+
 it will start go web server. It will log all to `logs/web-server.log` command to see that: `tail -f  logs/web-server.log` from current directory
 
 
