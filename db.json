@@ -1,0 +1,28 @@
+{
+  "object": {
+    "buffer_size": 10,
+    "Databases": [
+      {
+        "host": "localhost",
+	  "port": 3306,
+        "user": "root",
+        "pass": "root",
+        "type": "mysql",
+        "name": "golang",
+        "Tables": [
+          {
+            "name": "user",
+            "Types": [
+              {
+                "id": "int",
+                "name": "string",
+		    "country": "string",
+		    "mobile": "string"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
