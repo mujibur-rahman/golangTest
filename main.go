@@ -33,6 +33,10 @@ func init() {
 	useGinLogger = flag.Bool("useGinLogger", false, "Use gin logger instead of the one used in production")
 }
 
+//logger is the middleware to run with every request
+//It will log all the request information like timestamp, clientIp, response code,
+// response duration, method, path, protocol and response size
+//It will also help to recover any sort panic, fatal etc
 func logger(c *gin.Context) {
 	var start time.Time
 	const logFormat = "%s " + // Timestamp
@@ -97,8 +101,36 @@ func main() {
 		route.Use(logger)
 	}
 
-	route.GET("", func(ctx *gin.Context) {
+	route.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{"message": "Its an entry point :)"})
+	})
+
+	route.GET("/token", func(ctx *gin.Context) {
+		tokenString := auth.GetToken(secretpassword)
+		ctx.JSON(200, gin.H{"token": tokenString})
+	})
+	route.GET("/dbaccessor", func(ctx *gin.Context) {
+		ctx.JSON(200, getFakeDbData())
+	})
+	route.Use(auth.Auth(secretpassword))
+	route.POST("/auth", func(ctx *gin.Context) {
+		ak := ctx.Request.FormValue("authkey")
+		if ak == "" {
+			ctx.JSON(401, "No auth key")
+		} else if !auth.VerifyAuthKey(ak) {
+			ctx.JSON(401, "Wrong key")
+		} else {
+			ctx.Redirect(http.StatusFound, "/user")
+		}
+	})
+	route.GET("/user", func(ctx *gin.Context) {
+		key := ctx.MustGet("authKey")
+		udetails := dbAccessor(key.(string))
+		ctx.JSON(200, gin.H{"user": udetails})
+	})
+	route.GET("/user/:id", func(ctx *gin.Context) {
+		id := ctx.Params.ByName("id")
+		ctx.JSON(200, find(id))
 	})
 
 	if err := route.Run(fmt.Sprintf(":%d", *port)); err != nil {
@@ -123,4 +155,61 @@ func logFatalf(format string, args ...interface{}) {
 	logTime()
 	fmt.Fprintf(os.Stderr, "Error: ")
 	log.Fatalf(fmt.Sprintf(format, args...))
+}
+
+// dbAccessor returns the user profile if the authkey matched with the
+//request.
+func dbAccessor(key string) interface{} {
+	str := []byte(`{"abc123456abc":{"username": "Mujibur", "id": 9001, "country": "malaysia", "mobile": "+019378646"}}`)
+	var userdata map[string]interface{}
+	err := json.Unmarshal(str, &userdata)
+	if err != nil {
+		log.Println("Error on unmarshalling:", err)
+	}
+	return userdata[key]
+}
+
+//User is the important struct which will be storing the content from JSON
+//After unmarshalling the JSON data it will store to User struct
+type User struct {
+	Id      int    `json:"id"`
+	Name    string `json:"username"`
+	Country string `json:"country"`
+	Mobile  string `json:"mobile"`
+}
+
+// find function used to find the user information from a json data
+// It will return the data which will match with request /user/:id
+func find(idStr string) *User {
+	str := []byte(`[{"username": "Mujibur", "id": 9001, "country": "malaysia", "mobile": "+019378646"},{"username": "Luis", "id": 9002, "country": "Spain", "mobile": "+1212121"},{"username": "Holabola", "id": 9003, "country": "HongPong", "mobile": "+1234"},{"username": "XXX", "id": 9004, "country": "SSS", "mobile": "+4234234"}]`)
+	var UserList []*User
+	err := json.Unmarshal(str, &UserList)
+	if err != nil {
+		log.Println("Error on unmarshalling:", err)
+	}
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		log.Println("Error to convert: ", err)
+	}
+	for _, u := range UserList {
+		if u.Id == id {
+			return u
+		}
+	}
+	return nil
+}
+
+//getFakeDbData return the db content which has hard coded to db.config
+func getFakeDbData() interface{} {
+	jsonFile, err := ioutil.ReadFile("./db.json")
+	if err != nil {
+		fmt.Printf("File error: %v\n", err)
+		return nil
+	}
+	var dbConfig interface{}
+	err = json.Unmarshal(jsonFile, &dbConfig)
+	if err != nil {
+		log.Println("Error on unmarshalling: ", err)
+	}
+	return dbConfig
 }
